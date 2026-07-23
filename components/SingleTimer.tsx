@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useCountdown } from "@/hooks/useCountdown";
 import { playFinishSound, vibrate } from "@/lib/sound";
 import NumberField from "@/components/ui/NumberField";
@@ -22,14 +22,25 @@ export default function SingleTimer() {
   const durationMs = (minutes * 60 + seconds) * 1000;
 
   const { remainingMs, running, start, pause, resume, reset } = useCountdown(() => {
-    playFinishSound();
     vibrate([200, 100, 200, 100, 200]);
     setFinished(true);
   });
 
+  useEffect(() => {
+    if (!finished) return;
+    playFinishSound();
+    const id = setInterval(playFinishSound, 1200);
+    return () => clearInterval(id);
+  }, [finished]);
+
   function handleStart() {
     setFinished(false);
     setStarted(true);
+    start(durationMs);
+  }
+
+  function handleRepeat() {
+    setFinished(false);
     start(durationMs);
   }
 
@@ -102,6 +113,7 @@ export default function SingleTimer() {
         {started && !finished && !running && (
           <BigButton onClick={resume}>Resume</BigButton>
         )}
+        {finished && <BigButton onClick={handleRepeat}>Repeat</BigButton>}
         {started && (
           <BigButton onClick={handleReset} color="zinc">
             Reset
