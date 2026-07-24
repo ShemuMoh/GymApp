@@ -4,13 +4,11 @@ import { useState } from "react";
 import SingleTimer from "@/components/SingleTimer";
 import DoubleTimer from "@/components/DoubleTimer";
 import CounterTab from "@/components/CounterTab";
-import AccountPanel from "@/components/AccountPanel";
 
 const TOOLS = [
   { key: "single", label: "Timer" },
   { key: "double", label: "Intervals" },
   { key: "counter", label: "Counter" },
-  { key: "account", label: "Account" },
 ] as const;
 
 type ToolKey = (typeof TOOLS)[number]["key"];
@@ -45,7 +43,6 @@ export default function ToolsTab() {
       {active === "single" && <SingleTimer />}
       {active === "double" && <DoubleTimer />}
       {active === "counter" && <CounterTab />}
-      {active === "account" && <AccountPanel />}
     </div>
   );
 }

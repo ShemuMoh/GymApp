@@ -23,6 +23,16 @@ const tabs = [
       </svg>
     ),
   },
+  {
+    href: "/account",
+    label: "Account",
+    icon: (
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="h-6 w-6">
+        <circle cx="12" cy="8" r="4" />
+        <path d="M4 21c1.5-4 4.5-6 8-6s6.5 2 8 6" />
+      </svg>
+    ),
+  },
 ];
 
 export default function BottomTabs() {
@@ -37,7 +47,7 @@ export default function BottomTabs() {
             <Link
               key={tab.href}
               href={tab.href}
-              className={`flex flex-col items-center gap-0.5 rounded-full px-8 py-2 text-[11px] font-semibold transition-all duration-200 ${
+              className={`flex flex-col items-center gap-0.5 rounded-full px-6 py-2 text-[11px] font-semibold transition-all duration-200 ${
                 active
                   ? "bg-white/20 text-emerald-300 shadow-inner"
                   : "text-zinc-200 active:text-white"
