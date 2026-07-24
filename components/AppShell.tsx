@@ -22,7 +22,7 @@ export default function AppShell({ children }: { children: ReactNode }) {
 
   return (
     <>
-      <main className="mx-auto flex w-full max-w-lg flex-1 flex-col pb-24">{children}</main>
+      <main className="mx-auto flex w-full max-w-lg flex-1 flex-col pb-32">{children}</main>
       <BottomTabs />
     </>
   );

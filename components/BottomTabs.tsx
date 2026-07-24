@@ -6,7 +6,7 @@ import { usePathname } from "next/navigation";
 const tabs = [
   {
     href: "/",
-    label: "Exercise Log",
+    label: "Log",
     icon: (
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" className="h-6 w-6">
         <path d="M6.5 6.5v11M17.5 6.5v11M3 9v6M21 9v6M6.5 12h11" />
@@ -29,16 +29,18 @@ export default function BottomTabs() {
   const pathname = usePathname();
 
   return (
-    <nav className="fixed inset-x-0 bottom-0 z-20 border-t border-zinc-800 bg-zinc-950/90 pb-[env(safe-area-inset-bottom)] backdrop-blur">
-      <div className="mx-auto flex max-w-lg">
+    <nav className="pointer-events-none fixed inset-x-0 bottom-0 z-20 flex justify-center pb-[calc(env(safe-area-inset-bottom)+14px)] pt-2">
+      <div className="pointer-events-auto flex items-center rounded-full border border-white/10 bg-zinc-500/25 p-1.5 shadow-2xl shadow-black/60 backdrop-blur-2xl">
         {tabs.map((tab) => {
           const active = pathname === tab.href;
           return (
             <Link
               key={tab.href}
               href={tab.href}
-              className={`flex flex-1 flex-col items-center gap-1 py-2 text-[11px] font-medium transition-colors ${
-                active ? "text-emerald-400" : "text-zinc-500 hover:text-zinc-300"
+              className={`flex flex-col items-center gap-0.5 rounded-full px-8 py-2 text-[11px] font-semibold transition-all duration-200 ${
+                active
+                  ? "bg-white/20 text-emerald-300 shadow-inner"
+                  : "text-zinc-200 active:text-white"
               }`}
             >
               {tab.icon}
