@@ -17,13 +17,14 @@ function formatTime(ms: number) {
 }
 
 export default function DoubleTimer() {
-  const [labelA, setLabelA] = useState("Work");
   const [minutesA, setMinutesA] = useState(0);
   const [secondsA, setSecondsA] = useState(30);
 
-  const [labelB, setLabelB] = useState("Rest");
   const [minutesB, setMinutesB] = useState(0);
   const [secondsB, setSecondsB] = useState(15);
+
+  const labelA = "Work";
+  const labelB = "Rest";
 
   const [mode, setMode] = useState<Mode>("rounds");
   const [targetRounds, setTargetRounds] = useState(8);
@@ -116,11 +117,7 @@ export default function DoubleTimer() {
         <div className="flex flex-col items-center gap-4">
           <div className="flex flex-wrap justify-center gap-3">
             <div className="flex flex-col items-center gap-2 rounded-2xl bg-zinc-900 p-3">
-              <input
-                value={labelA}
-                onChange={(e) => setLabelA(e.target.value)}
-                className="w-32 rounded-lg bg-zinc-800 px-3 py-1 text-center text-lg font-semibold text-sky-400 outline-none"
-              />
+              <p className="text-lg font-semibold text-sky-400">{labelA}</p>
               <div className="flex items-center gap-3">
                 <NumberField label="min" value={minutesA} onChange={setMinutesA} max={99} />
                 <span className="text-2xl">:</span>
@@ -129,11 +126,7 @@ export default function DoubleTimer() {
             </div>
 
             <div className="flex flex-col items-center gap-2 rounded-2xl bg-zinc-900 p-3">
-              <input
-                value={labelB}
-                onChange={(e) => setLabelB(e.target.value)}
-                className="w-32 rounded-lg bg-zinc-800 px-3 py-1 text-center text-lg font-semibold text-orange-400 outline-none"
-              />
+              <p className="text-lg font-semibold text-orange-400">{labelB}</p>
               <div className="flex items-center gap-3">
                 <NumberField label="min" value={minutesB} onChange={setMinutesB} max={99} />
                 <span className="text-2xl">:</span>
