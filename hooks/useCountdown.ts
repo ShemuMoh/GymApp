@@ -9,6 +9,35 @@ export function useCountdown(onComplete: () => void) {
     onCompleteRef.current = onComplete;
   });
 
+  // Keep the screen awake while running — a locked phone suspends JS timers,
+  // which would silently kill the countdown and its alarm.
+  useEffect(() => {
+    if (!running || !("wakeLock" in navigator)) return;
+    let lock: WakeLockSentinel | null = null;
+    let released = false;
+
+    const acquire = async () => {
+      try {
+        lock = await navigator.wakeLock.request("screen");
+        if (released) lock.release();
+      } catch {
+        // Not critical; browser may refuse (e.g. low battery).
+      }
+    };
+    acquire();
+
+    const onVisible = () => {
+      if (document.visibilityState === "visible") acquire();
+    };
+    document.addEventListener("visibilitychange", onVisible);
+
+    return () => {
+      released = true;
+      document.removeEventListener("visibilitychange", onVisible);
+      lock?.release().catch(() => {});
+    };
+  }, [running]);
+
   useEffect(() => {
     if (!running) return;
     const id = setInterval(() => {

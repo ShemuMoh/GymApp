@@ -2,7 +2,7 @@
 
 import { useEffect, useRef, useState } from "react";
 import { useCountdown } from "@/hooks/useCountdown";
-import { playSwitchBeep, playFinishSound, vibrate } from "@/lib/sound";
+import { playSwitchBeep, playFinishSound, unlockAudio, vibrate } from "@/lib/sound";
 import NumberField from "@/components/ui/NumberField";
 import BigButton from "@/components/ui/BigButton";
 
@@ -79,6 +79,7 @@ export default function DoubleTimer() {
   }, [start]);
 
   function handleStart() {
+    unlockAudio();
     setFinished(false);
     setStarted(true);
     phaseRef.current = "A";
@@ -195,7 +196,16 @@ export default function DoubleTimer() {
                 Pause
               </BigButton>
             )}
-            {!finished && !running && <BigButton onClick={resume}>Resume</BigButton>}
+            {!finished && !running && (
+              <BigButton
+                onClick={() => {
+                  unlockAudio();
+                  resume();
+                }}
+              >
+                Resume
+              </BigButton>
+            )}
             <BigButton onClick={handleReset} color="zinc">
               Reset
             </BigButton>

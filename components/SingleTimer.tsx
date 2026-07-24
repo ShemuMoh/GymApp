@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { useCountdown } from "@/hooks/useCountdown";
-import { playFinishSound, vibrate } from "@/lib/sound";
+import { playFinishSound, unlockAudio, vibrate } from "@/lib/sound";
 import NumberField from "@/components/ui/NumberField";
 import BigButton from "@/components/ui/BigButton";
 
@@ -34,12 +34,14 @@ export default function SingleTimer() {
   }, [finished]);
 
   function handleStart() {
+    unlockAudio();
     setFinished(false);
     setStarted(true);
     start(durationMs);
   }
 
   function handleRepeat() {
+    unlockAudio();
     setFinished(false);
     start(durationMs);
   }
@@ -111,7 +113,14 @@ export default function SingleTimer() {
           </BigButton>
         )}
         {started && !finished && !running && (
-          <BigButton onClick={resume}>Resume</BigButton>
+          <BigButton
+            onClick={() => {
+              unlockAudio();
+              resume();
+            }}
+          >
+            Resume
+          </BigButton>
         )}
         {finished && <BigButton onClick={handleRepeat}>Repeat</BigButton>}
         {started && (

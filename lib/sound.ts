@@ -10,6 +10,20 @@ function getCtx(): AudioContext {
   return ctx;
 }
 
+// Browsers only allow audio that was "unlocked" during a user gesture.
+// Call this from Start/Resume button handlers so later timer beeps are permitted.
+export function unlockAudio() {
+  const audioCtx = getCtx();
+  if (audioCtx.state === "suspended") {
+    audioCtx.resume();
+  }
+  const buffer = audioCtx.createBuffer(1, 1, 22050);
+  const source = audioCtx.createBufferSource();
+  source.buffer = buffer;
+  source.connect(audioCtx.destination);
+  source.start(0);
+}
+
 function tone(frequency: number, startTime: number, duration: number, volume = 0.3) {
   const audioCtx = getCtx();
   const oscillator = audioCtx.createOscillator();
