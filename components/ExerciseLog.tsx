@@ -48,11 +48,14 @@ function Header({ title, subtitle, onBack }: { title: string; subtitle?: string;
 }
 
 export default function ExerciseLog() {
-  const { exercises, sets, loading, addExercise, addSet, deleteSet } = useWorkoutData();
+  const { exercises, sets, loading, addExercise, addSet, updateSet, deleteSet } = useWorkoutData();
   const [screen, setScreen] = useState<Screen>({ name: "days" });
   const [newExerciseName, setNewExerciseName] = useState("");
   const [reps, setReps] = useState(10);
   const [weight, setWeight] = useState(20);
+  const [editingSetId, setEditingSetId] = useState<string | null>(null);
+  const [editReps, setEditReps] = useState(0);
+  const [editWeight, setEditWeight] = useState(0);
 
   const exerciseById = useMemo(
     () => new Map(exercises.map((ex) => [ex.id, ex])),
@@ -102,23 +105,85 @@ export default function ExerciseLog() {
           {daySets.length === 0 && (
             <p className="py-6 text-center text-zinc-500">No sets yet — log your first one below.</p>
           )}
-          {daySets.map((s, i) => (
-            <div key={s.id} className="flex items-center justify-between rounded-2xl bg-zinc-900 px-4 py-3">
-              <span className="text-sm font-semibold uppercase tracking-wide text-zinc-500">
-                Set {i + 1}
-              </span>
-              <span className="font-mono text-lg text-white">
-                {s.reps} reps · {s.weight} kg
-              </span>
-              <button
-                onClick={() => deleteSet(s.id)}
-                aria-label="Delete set"
-                className="flex h-7 w-7 items-center justify-center rounded-full bg-zinc-800 text-zinc-400 active:bg-red-500 active:text-white"
+          {daySets.map((s, i) =>
+            editingSetId === s.id ? (
+              <form
+                key={s.id}
+                onSubmit={(e) => {
+                  e.preventDefault();
+                  updateSet(s.id, editReps, editWeight);
+                  setEditingSetId(null);
+                }}
+                className="flex items-center gap-2 rounded-2xl bg-zinc-900 px-4 py-3 ring-2 ring-emerald-400"
               >
-                ×
-              </button>
-            </div>
-          ))}
+                <span className="text-sm font-semibold uppercase tracking-wide text-zinc-500">
+                  Set {i + 1}
+                </span>
+                <input
+                  type="number"
+                  min={0}
+                  value={editReps}
+                  onChange={(e) => setEditReps(Number(e.target.value))}
+                  aria-label="Reps"
+                  className="w-16 rounded-lg bg-zinc-800 px-2 py-2 text-center text-white outline-none"
+                />
+                <span className="text-xs text-zinc-500">reps</span>
+                <input
+                  type="number"
+                  min={0}
+                  step="0.5"
+                  value={editWeight}
+                  onChange={(e) => setEditWeight(Number(e.target.value))}
+                  aria-label="Weight"
+                  className="w-18 rounded-lg bg-zinc-800 px-2 py-2 text-center text-white outline-none"
+                />
+                <span className="text-xs text-zinc-500">kg</span>
+                <div className="ml-auto flex gap-1">
+                  <button
+                    type="submit"
+                    className="rounded-lg bg-emerald-500 px-3 py-2 text-sm font-bold text-black"
+                  >
+                    Save
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setEditingSetId(null)}
+                    className="rounded-lg bg-zinc-800 px-3 py-2 text-sm font-medium text-zinc-300"
+                  >
+                    Cancel
+                  </button>
+                </div>
+              </form>
+            ) : (
+              <div key={s.id} className="flex items-center justify-between rounded-2xl bg-zinc-900 px-4 py-3">
+                <button
+                  onClick={() => {
+                    setEditingSetId(s.id);
+                    setEditReps(s.reps);
+                    setEditWeight(s.weight);
+                  }}
+                  className="flex flex-1 items-center justify-between pr-3 text-left"
+                >
+                  <span className="text-sm font-semibold uppercase tracking-wide text-zinc-500">
+                    Set {i + 1}
+                  </span>
+                  <span className="font-mono text-lg text-white">
+                    {s.reps} reps · {s.weight} kg
+                  </span>
+                </button>
+                <button
+                  onClick={() => deleteSet(s.id)}
+                  aria-label="Delete set"
+                  className="flex h-7 w-7 items-center justify-center rounded-full bg-zinc-800 text-zinc-400 active:bg-red-500 active:text-white"
+                >
+                  ×
+                </button>
+              </div>
+            ),
+          )}
+          {daySets.length > 0 && (
+            <p className="pt-1 text-center text-xs text-zinc-600">Tap a set to edit it</p>
+          )}
         </div>
 
         <form

@@ -81,10 +81,17 @@ export function useWorkoutData() {
     [userId],
   );
 
+  const updateSet = useCallback(async (id: string, reps: number, weight: number) => {
+    const { error } = await supabase.from("workout_sets").update({ reps, weight }).eq("id", id);
+    if (!error) {
+      setSets((prev) => prev.map((s) => (s.id === id ? { ...s, reps, weight } : s)));
+    }
+  }, []);
+
   const deleteSet = useCallback(async (id: string) => {
     await supabase.from("workout_sets").delete().eq("id", id);
     setSets((prev) => prev.filter((s) => s.id !== id));
   }, []);
 
-  return { exercises, sets, loading, addExercise, addSet, deleteSet };
+  return { exercises, sets, loading, addExercise, addSet, updateSet, deleteSet };
 }
