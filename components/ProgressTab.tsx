@@ -3,10 +3,12 @@
 import { useState } from "react";
 import WeightProgress from "@/components/WeightProgress";
 import PhotoProgress from "@/components/PhotoProgress";
+import PersonalBests from "@/components/PersonalBests";
 
 const SUBTABS = [
-  { key: "weight", label: "Weight progress" },
-  { key: "photo", label: "Photo progress" },
+  { key: "weight", label: "Weight" },
+  { key: "photo", label: "Photos" },
+  { key: "pb", label: "Personal best" },
 ] as const;
 
 type SubTab = (typeof SUBTABS)[number]["key"];
@@ -38,7 +40,9 @@ export default function ProgressTab() {
         </div>
       </div>
 
-      {active === "weight" ? <WeightProgress /> : <PhotoProgress />}
+      {active === "weight" && <WeightProgress />}
+      {active === "photo" && <PhotoProgress />}
+      {active === "pb" && <PersonalBests />}
     </div>
   );
 }
