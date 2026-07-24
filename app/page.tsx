@@ -1,5 +1,5 @@
-import SingleTimer from "@/components/SingleTimer";
+import ToolsTab from "@/components/ToolsTab";
 
 export default function Home() {
-  return <SingleTimer />;
+  return <ToolsTab />;
 }
