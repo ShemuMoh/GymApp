@@ -47,7 +47,7 @@ export default function CounterTab() {
   }
 
   return (
-    <div className="flex flex-1 flex-col items-center justify-center gap-10 px-6 py-10">
+    <div className="flex flex-1 flex-col items-center justify-center gap-5 px-6 py-3">
       <div className="flex flex-wrap justify-center gap-2 rounded-full bg-zinc-900 p-1">
         {PRESETS.map((preset) => (
           <button
@@ -63,7 +63,7 @@ export default function CounterTab() {
       </div>
 
       <p className="text-sm uppercase tracking-widest text-zinc-500">{active}</p>
-      <div className="font-mono text-9xl font-bold tabular-nums">{counts[active]}</div>
+      <div className="font-mono text-8xl font-bold tabular-nums">{counts[active]}</div>
 
       <div className="flex gap-4">
         <button

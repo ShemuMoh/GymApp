@@ -17,8 +17,8 @@ export default function ToolsTab() {
   const [active, setActive] = useState<ToolKey>("single");
 
   return (
-    <div className="flex flex-1 flex-col">
-      <div className="sticky top-0 z-10 bg-zinc-950/90 px-4 py-4 backdrop-blur">
+    <div className="flex flex-1 flex-col overflow-hidden">
+      <div className="px-4 py-3">
         <h1 className="text-2xl font-bold">Utilities</h1>
       </div>
 

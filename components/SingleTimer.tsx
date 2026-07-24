@@ -61,11 +61,11 @@ export default function SingleTimer() {
 
   return (
     <div
-      className={`flex flex-1 flex-col items-center justify-center gap-8 px-6 py-10 transition-colors duration-300 ${
+      className={`flex flex-1 flex-col items-center justify-center gap-5 px-6 py-3 transition-colors duration-300 ${
         finished ? "animate-pulse bg-emerald-900/40" : ""
       }`}
     >
-      <div className="font-mono text-8xl font-bold tabular-nums">
+      <div className="font-mono text-7xl font-bold tabular-nums">
         {formatTime(started ? remainingMs : durationMs)}
       </div>
 

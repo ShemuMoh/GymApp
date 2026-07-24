@@ -110,12 +110,12 @@ export default function DoubleTimer() {
 
   return (
     <div
-      className={`flex flex-1 flex-col items-center justify-center gap-8 px-6 py-10 transition-colors duration-300 ${backdrop}`}
+      className={`flex flex-1 flex-col items-center justify-center gap-4 px-4 py-3 transition-colors duration-300 ${backdrop}`}
     >
       {!started ? (
-        <div className="flex flex-col items-center gap-8">
-          <div className="flex flex-wrap justify-center gap-6">
-            <div className="flex flex-col items-center gap-3 rounded-2xl bg-zinc-900 p-5">
+        <div className="flex flex-col items-center gap-4">
+          <div className="flex flex-wrap justify-center gap-3">
+            <div className="flex flex-col items-center gap-2 rounded-2xl bg-zinc-900 p-3">
               <input
                 value={labelA}
                 onChange={(e) => setLabelA(e.target.value)}
@@ -128,7 +128,7 @@ export default function DoubleTimer() {
               </div>
             </div>
 
-            <div className="flex flex-col items-center gap-3 rounded-2xl bg-zinc-900 p-5">
+            <div className="flex flex-col items-center gap-2 rounded-2xl bg-zinc-900 p-3">
               <input
                 value={labelB}
                 onChange={(e) => setLabelB(e.target.value)}
@@ -142,7 +142,7 @@ export default function DoubleTimer() {
             </div>
           </div>
 
-          <div className="flex flex-col items-center gap-3">
+          <div className="flex flex-col items-center gap-2">
             <div className="flex gap-2 rounded-full bg-zinc-900 p-1">
               <button
                 onClick={() => setMode("indefinite")}
@@ -176,11 +176,11 @@ export default function DoubleTimer() {
           </BigButton>
         </div>
       ) : (
-        <div className="flex flex-col items-center gap-6">
+        <div className="flex flex-col items-center gap-4">
           <p className={`text-2xl font-bold uppercase tracking-widest ${phaseColor}`}>
             {phase === "A" ? labelA : labelB}
           </p>
-          <div className="font-mono text-8xl font-bold tabular-nums">{formatTime(remainingMs)}</div>
+          <div className="font-mono text-7xl font-bold tabular-nums">{formatTime(remainingMs)}</div>
           {mode === "rounds" ? (
             <p className="text-zinc-400">
               Round {Math.min(round, targetRounds)} of {targetRounds}
