@@ -26,6 +26,11 @@ export default function PersonalBests() {
   const [message, setMessage] = useState<string | null>(null);
   const [popup, setPopup] = useState<string | null>(null);
   const [expandedId, setExpandedId] = useState<string | null>(null);
+  const [confirmDelete, setConfirmDelete] = useState<{
+    id: string;
+    label: string;
+    nextUp: string | null;
+  } | null>(null);
 
   const grouped = useMemo(() => {
     const byExercise = new Map<string, typeof bests>();
@@ -83,6 +88,39 @@ export default function PersonalBests() {
 
   return (
     <div className="flex flex-col gap-4 px-4">
+      {confirmDelete && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 px-8">
+          <div className="flex w-full max-w-sm flex-col items-center gap-4 rounded-3xl bg-zinc-900 p-6 text-center">
+            <span className="text-4xl">⚠️</span>
+            <p className="text-white">
+              Delete your current PB — <span className="font-bold">{confirmDelete.label}</span>?
+            </p>
+            <p className="text-sm text-zinc-400">
+              {confirmDelete.nextUp
+                ? `Your previous record (${confirmDelete.nextUp}) will become your PB again.`
+                : "This exercise will have no PB afterwards."}
+            </p>
+            <div className="flex w-full gap-2">
+              <button
+                onClick={() => {
+                  deleteBest(confirmDelete.id);
+                  setConfirmDelete(null);
+                }}
+                className="flex-1 rounded-2xl bg-red-500 px-4 py-3 font-bold text-white active:scale-95"
+              >
+                Delete
+              </button>
+              <button
+                onClick={() => setConfirmDelete(null)}
+                className="flex-1 rounded-2xl bg-zinc-800 px-4 py-3 font-semibold text-zinc-300 active:scale-95"
+              >
+                Cancel
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
       {popup && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 px-8">
           <div className="flex w-full max-w-sm flex-col items-center gap-4 rounded-3xl bg-zinc-900 p-6 text-center">
@@ -213,6 +251,24 @@ export default function PersonalBests() {
                     </button>
                   </div>
                 ))}
+                <button
+                  onClick={() => {
+                    const runnerUp =
+                      history.length > 0
+                        ? history.reduce((top, e) => (e.weight > top.weight ? e : top), history[0])
+                        : null;
+                    setConfirmDelete({
+                      id: best.id,
+                      label: `${exerciseName(exId)} ${best.weight} kg × ${best.reps}`,
+                      nextUp: runnerUp
+                        ? `${runnerUp.weight} kg × ${runnerUp.reps} on ${formatDay(runnerUp.achieved_on)}`
+                        : null,
+                    });
+                  }}
+                  className="mt-1 rounded-xl bg-red-500/10 px-3 py-2 text-sm font-semibold text-red-400 active:bg-red-500/20"
+                >
+                  Delete current PB
+                </button>
               </div>
             )}
           </div>
