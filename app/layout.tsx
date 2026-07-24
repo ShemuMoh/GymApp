@@ -15,8 +15,13 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "Gym Timer",
+  title: "Gym App",
   description: "Workout timers, rep counter, and exercise tracking that syncs online.",
+  appleWebApp: {
+    capable: true,
+    statusBarStyle: "black-translucent",
+    title: "Gym App",
+  },
 };
 
 export const viewport: Viewport = {

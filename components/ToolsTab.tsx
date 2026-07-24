@@ -4,10 +4,11 @@ import { useState } from "react";
 import SingleTimer from "@/components/SingleTimer";
 import DoubleTimer from "@/components/DoubleTimer";
 import CounterTab from "@/components/CounterTab";
+import { supabase } from "@/lib/supabaseClient";
 
 const TOOLS = [
-  { key: "single", label: "Single Timer" },
-  { key: "double", label: "Double Timer" },
+  { key: "single", label: "Timer" },
+  { key: "double", label: "Intervals" },
   { key: "counter", label: "Counter" },
 ] as const;
 
@@ -18,20 +19,32 @@ export default function ToolsTab() {
 
   return (
     <div className="flex flex-1 flex-col">
-      <div className="flex justify-center gap-2 border-b border-zinc-900 px-4 py-3">
-        {TOOLS.map((tool) => (
-          <button
-            key={tool.key}
-            onClick={() => setActive(tool.key)}
-            className={`rounded-full px-4 py-2 text-sm font-medium transition-colors ${
-              active === tool.key
-                ? "bg-emerald-500 text-black"
-                : "bg-zinc-900 text-zinc-400 hover:text-zinc-200"
-            }`}
-          >
-            {tool.label}
-          </button>
-        ))}
+      <div className="sticky top-0 z-10 flex items-center justify-between bg-zinc-950/90 px-4 py-4 backdrop-blur">
+        <h1 className="text-2xl font-bold">Utilities</h1>
+        <button
+          onClick={() => supabase.auth.signOut()}
+          className="text-sm font-medium text-zinc-500 active:text-zinc-300"
+        >
+          Sign out
+        </button>
+      </div>
+
+      <div className="flex gap-1 px-4 pb-2">
+        <div className="flex flex-1 rounded-xl bg-zinc-900 p-1">
+          {TOOLS.map((tool) => (
+            <button
+              key={tool.key}
+              onClick={() => setActive(tool.key)}
+              className={`flex-1 rounded-lg py-2 text-sm font-semibold transition-colors ${
+                active === tool.key
+                  ? "bg-zinc-700 text-white"
+                  : "text-zinc-500 active:text-zinc-300"
+              }`}
+            >
+              {tool.label}
+            </button>
+          ))}
+        </div>
       </div>
 
       {active === "single" && <SingleTimer />}

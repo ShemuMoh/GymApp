@@ -1,5 +1,5 @@
-import ToolsTab from "@/components/ToolsTab";
+import ExerciseLog from "@/components/ExerciseLog";
 
 export default function Home() {
-  return <ToolsTab />;
+  return <ExerciseLog />;
 }

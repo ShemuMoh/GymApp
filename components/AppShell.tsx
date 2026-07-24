@@ -2,7 +2,7 @@
 
 import type { ReactNode } from "react";
 import { useAuth } from "@/context/AuthContext";
-import Nav from "@/components/Nav";
+import BottomTabs from "@/components/BottomTabs";
 import SignIn from "@/components/SignIn";
 
 export default function AppShell({ children }: { children: ReactNode }) {
@@ -22,8 +22,8 @@ export default function AppShell({ children }: { children: ReactNode }) {
 
   return (
     <>
-      <Nav />
-      <main className="flex flex-1 flex-col">{children}</main>
+      <main className="mx-auto flex w-full max-w-lg flex-1 flex-col pb-24">{children}</main>
+      <BottomTabs />
     </>
   );
 }
