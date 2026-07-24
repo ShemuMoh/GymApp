@@ -2,6 +2,7 @@
 
 import { useMemo, useState } from "react";
 import { useWorkoutData } from "@/hooks/useWorkoutData";
+import { cleanNumberText } from "@/lib/numberText";
 
 type Screen =
   | { name: "days" }
@@ -51,11 +52,11 @@ export default function ExerciseLog() {
   const { exercises, sets, loading, addExercise, addSet, updateSet, deleteSet } = useWorkoutData();
   const [screen, setScreen] = useState<Screen>({ name: "days" });
   const [newExerciseName, setNewExerciseName] = useState("");
-  const [reps, setReps] = useState(10);
-  const [weight, setWeight] = useState(20);
+  const [reps, setReps] = useState("10");
+  const [weight, setWeight] = useState("20");
   const [editingSetId, setEditingSetId] = useState<string | null>(null);
-  const [editReps, setEditReps] = useState(0);
-  const [editWeight, setEditWeight] = useState(0);
+  const [editReps, setEditReps] = useState("");
+  const [editWeight, setEditWeight] = useState("");
 
   const exerciseById = useMemo(
     () => new Map(exercises.map((ex) => [ex.id, ex])),
@@ -111,7 +112,7 @@ export default function ExerciseLog() {
                 key={s.id}
                 onSubmit={(e) => {
                   e.preventDefault();
-                  updateSet(s.id, editReps, editWeight);
+                  updateSet(s.id, Number(editReps) || 0, Number(editWeight) || 0);
                   setEditingSetId(null);
                 }}
                 className="flex items-center gap-2 rounded-2xl bg-zinc-900 px-4 py-3 ring-2 ring-emerald-400"
@@ -123,7 +124,7 @@ export default function ExerciseLog() {
                   type="number"
                   min={0}
                   value={editReps}
-                  onChange={(e) => setEditReps(Number(e.target.value))}
+                  onChange={(e) => setEditReps(cleanNumberText(e.target.value))}
                   aria-label="Reps"
                   className="w-16 rounded-lg bg-zinc-800 px-2 py-2 text-center text-white outline-none"
                 />
@@ -133,7 +134,7 @@ export default function ExerciseLog() {
                   min={0}
                   step="0.5"
                   value={editWeight}
-                  onChange={(e) => setEditWeight(Number(e.target.value))}
+                  onChange={(e) => setEditWeight(cleanNumberText(e.target.value))}
                   aria-label="Weight"
                   className="w-18 rounded-lg bg-zinc-800 px-2 py-2 text-center text-white outline-none"
                 />
@@ -159,8 +160,8 @@ export default function ExerciseLog() {
                 <button
                   onClick={() => {
                     setEditingSetId(s.id);
-                    setEditReps(s.reps);
-                    setEditWeight(s.weight);
+                    setEditReps(String(s.reps));
+                    setEditWeight(String(s.weight));
                   }}
                   className="flex flex-1 items-center justify-between pr-3 text-left"
                 >
@@ -189,7 +190,7 @@ export default function ExerciseLog() {
         <form
           onSubmit={(e) => {
             e.preventDefault();
-            addSet(screen.date, screen.exerciseId, reps, weight, daySets.length + 1);
+            addSet(screen.date, screen.exerciseId, Number(reps) || 0, Number(weight) || 0, daySets.length + 1);
           }}
           className="mt-4 flex items-end justify-center gap-3 px-4"
         >
@@ -199,7 +200,7 @@ export default function ExerciseLog() {
               type="number"
               min={0}
               value={reps}
-              onChange={(e) => setReps(Number(e.target.value))}
+              onChange={(e) => setReps(cleanNumberText(e.target.value))}
               className="w-20 rounded-xl bg-zinc-800 px-3 py-3 text-center text-lg text-white outline-none focus:ring-2 focus:ring-emerald-400"
             />
           </label>
@@ -210,7 +211,7 @@ export default function ExerciseLog() {
               min={0}
               step="0.5"
               value={weight}
-              onChange={(e) => setWeight(Number(e.target.value))}
+              onChange={(e) => setWeight(cleanNumberText(e.target.value))}
               className="w-24 rounded-xl bg-zinc-800 px-3 py-3 text-center text-lg text-white outline-none focus:ring-2 focus:ring-emerald-400"
             />
           </label>

@@ -2,6 +2,7 @@
 
 import { useState, type FormEvent } from "react";
 import { useBodyWeights } from "@/hooks/useBodyWeights";
+import { cleanNumberText } from "@/lib/numberText";
 
 function todayIso() {
   return new Date().toISOString().slice(0, 10);
@@ -72,7 +73,7 @@ export default function WeightProgress() {
               step="0.1"
               inputMode="decimal"
               value={weightInput}
-              onChange={(e) => setWeightInput(e.target.value)}
+              onChange={(e) => setWeightInput(cleanNumberText(e.target.value))}
               placeholder="0.0"
               className="w-24 rounded-xl bg-zinc-800 px-3 py-3 text-center text-white outline-none focus:ring-2 focus:ring-emerald-400"
             />
