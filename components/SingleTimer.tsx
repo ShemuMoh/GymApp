@@ -79,7 +79,7 @@ export default function SingleTimer() {
             <NumberField label="sec" value={seconds} onChange={setSeconds} max={59} />
           </div>
           <div className="flex gap-2">
-            {[30, 60, 300].map((s) => (
+            {[1, 5, 60, 120, 300].map((s) => (
               <button
                 key={s}
                 onClick={() => addTime(s)}
