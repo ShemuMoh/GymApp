@@ -93,5 +93,16 @@ export function useWorkoutData() {
     setSets((prev) => prev.filter((s) => s.id !== id));
   }, []);
 
-  return { exercises, sets, loading, addExercise, addSet, updateSet, deleteSet };
+  const deleteExerciseDay = useCallback(async (performedOn: string, exerciseId: string) => {
+    await supabase
+      .from("workout_sets")
+      .delete()
+      .eq("performed_on", performedOn)
+      .eq("exercise_id", exerciseId);
+    setSets((prev) =>
+      prev.filter((s) => !(s.performed_on === performedOn && s.exercise_id === exerciseId)),
+    );
+  }, []);
+
+  return { exercises, sets, loading, addExercise, addSet, updateSet, deleteSet, deleteExerciseDay };
 }

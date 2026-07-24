@@ -3,6 +3,7 @@
 import { useMemo, useState } from "react";
 import { useWorkoutData } from "@/hooks/useWorkoutData";
 import { cleanNumberText } from "@/lib/numberText";
+import SwipeRow from "@/components/ui/SwipeRow";
 
 type Screen =
   | { name: "days" }
@@ -49,7 +50,8 @@ function Header({ title, subtitle, onBack }: { title: string; subtitle?: string;
 }
 
 export default function ExerciseLog() {
-  const { exercises, sets, loading, addExercise, addSet, updateSet, deleteSet } = useWorkoutData();
+  const { exercises, sets, loading, addExercise, addSet, updateSet, deleteSet, deleteExerciseDay } =
+    useWorkoutData();
   const [screen, setScreen] = useState<Screen>({ name: "days" });
   const [newExerciseName, setNewExerciseName] = useState("");
   const [reps, setReps] = useState("10");
@@ -246,20 +248,24 @@ export default function ExerciseLog() {
 
         <div className="flex flex-col gap-2 px-4">
           {[...grouped.entries()].map(([exerciseId, count]) => (
-            <button
-              key={exerciseId}
-              onClick={() => setScreen({ name: "exercise", date: screen.date, exerciseId })}
-              className="flex items-center justify-between rounded-2xl bg-zinc-900 px-4 py-4 text-left active:bg-zinc-800"
-            >
-              <span className="font-semibold text-white">{exerciseById.get(exerciseId)?.name}</span>
-              <span className="flex items-center gap-2 text-sm text-zinc-500">
-                {count} set{count === 1 ? "" : "s"}
-                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" className="h-4 w-4">
-                  <path d="M9 5l7 7-7 7" />
-                </svg>
-              </span>
-            </button>
+            <SwipeRow key={exerciseId} onDelete={() => deleteExerciseDay(screen.date, exerciseId)}>
+              <button
+                onClick={() => setScreen({ name: "exercise", date: screen.date, exerciseId })}
+                className="flex w-full items-center justify-between bg-zinc-900 px-4 py-4 text-left active:bg-zinc-800"
+              >
+                <span className="font-semibold text-white">{exerciseById.get(exerciseId)?.name}</span>
+                <span className="flex items-center gap-2 text-sm text-zinc-500">
+                  {count} set{count === 1 ? "" : "s"}
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" className="h-4 w-4">
+                    <path d="M9 5l7 7-7 7" />
+                  </svg>
+                </span>
+              </button>
+            </SwipeRow>
           ))}
+          {grouped.size > 0 && (
+            <p className="pt-1 text-center text-xs text-zinc-600">Swipe an exercise left to delete it</p>
+          )}
         </div>
 
         <div className="mt-6 flex flex-col gap-3 px-4">
