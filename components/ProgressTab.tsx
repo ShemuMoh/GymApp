@@ -8,7 +8,7 @@ import PersonalBests from "@/components/PersonalBests";
 const SUBTABS = [
   { key: "weight", label: "Weight" },
   { key: "photo", label: "Photos" },
-  { key: "pb", label: "Personal best" },
+  { key: "pb", label: "Personal Best" },
 ] as const;
 
 type SubTab = (typeof SUBTABS)[number]["key"];
