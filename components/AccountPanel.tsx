@@ -12,15 +12,20 @@ export default function AccountPanel() {
   const meta = (user?.user_metadata ?? {}) as { display_name?: string; avatar_url?: string };
 
   const [name, setName] = useState(meta.display_name ?? "");
-  const [avatarUrl, setAvatarUrl] = useState(meta.avatar_url ?? "");
+  const [nameDraft, setNameDraft] = useState("");
+  const [editingName, setEditingName] = useState(false);
   const [savingName, setSavingName] = useState(false);
-  const [uploading, setUploading] = useState(false);
   const [nameMessage, setNameMessage] = useState<Message | null>(null);
+
+  const [avatarUrl, setAvatarUrl] = useState(meta.avatar_url ?? "");
+  const [uploading, setUploading] = useState(false);
   const [avatarMessage, setAvatarMessage] = useState<Message | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
-  const [password, setPassword] = useState("");
-  const [confirm, setConfirm] = useState("");
+  const [resettingPassword, setResettingPassword] = useState(false);
+  const [oldPassword, setOldPassword] = useState("");
+  const [newPassword, setNewPassword] = useState("");
+  const [repeatPassword, setRepeatPassword] = useState("");
   const [savingPassword, setSavingPassword] = useState(false);
   const [passwordMessage, setPasswordMessage] = useState<Message | null>(null);
 
@@ -63,38 +68,68 @@ export default function AccountPanel() {
     }
   }
 
+  function startEditingName() {
+    setNameDraft(name);
+    setNameMessage(null);
+    setEditingName(true);
+  }
+
   async function handleSaveName(e: FormEvent) {
     e.preventDefault();
     setSavingName(true);
     setNameMessage(null);
-    const { error } = await supabase.auth.updateUser({ data: { display_name: name.trim() } });
+    const trimmed = nameDraft.trim();
+    const { error } = await supabase.auth.updateUser({ data: { display_name: trimmed } });
     setSavingName(false);
-    setNameMessage(
-      error
-        ? { kind: "error", text: error.message }
-        : { kind: "ok", text: "Name saved." },
-    );
+    if (error) {
+      setNameMessage({ kind: "error", text: error.message });
+    } else {
+      setName(trimmed);
+      setEditingName(false);
+    }
   }
 
-  async function handleSetPassword(e: FormEvent) {
+  function startResettingPassword() {
+    setOldPassword("");
+    setNewPassword("");
+    setRepeatPassword("");
+    setPasswordMessage(null);
+    setResettingPassword(true);
+  }
+
+  async function handleResetPassword(e: FormEvent) {
     e.preventDefault();
-    if (password.length < 8) {
-      setPasswordMessage({ kind: "error", text: "Password must be at least 8 characters." });
+    if (!user?.email) return;
+    if (newPassword.length < 8) {
+      setPasswordMessage({ kind: "error", text: "New password must be at least 8 characters." });
       return;
     }
-    if (password !== confirm) {
-      setPasswordMessage({ kind: "error", text: "Passwords don't match." });
+    if (newPassword !== repeatPassword) {
+      setPasswordMessage({ kind: "error", text: "New passwords don't match." });
       return;
     }
     setSavingPassword(true);
     setPasswordMessage(null);
-    const { error } = await supabase.auth.updateUser({ password });
+
+    // Verify the old password by re-authenticating before allowing the change.
+    const { error: verifyError } = await supabase.auth.signInWithPassword({
+      email: user.email,
+      password: oldPassword,
+    });
+
+    if (verifyError) {
+      setSavingPassword(false);
+      setPasswordMessage({ kind: "error", text: "Old password is incorrect." });
+      return;
+    }
+
+    const { error } = await supabase.auth.updateUser({ password: newPassword });
+
     setSavingPassword(false);
     if (error) {
       setPasswordMessage({ kind: "error", text: error.message });
     } else {
-      setPassword("");
-      setConfirm("");
+      setResettingPassword(false);
       setPasswordMessage({ kind: "ok", text: "Password updated." });
     }
   }
@@ -145,29 +180,49 @@ export default function AccountPanel() {
         </div>
 
         {/* Name */}
-        <form onSubmit={handleSaveName} className="flex flex-col gap-3 rounded-2xl bg-zinc-900 px-4 py-4">
+        <div className="rounded-2xl bg-zinc-900 px-4 py-4">
           <p className="text-xs font-semibold uppercase tracking-wide text-zinc-500">Name</p>
-          <div className="flex gap-2">
-            <input
-              value={name}
-              onChange={(e) => setName(e.target.value)}
-              placeholder="Your name"
-              className="flex-1 rounded-xl bg-zinc-800 px-4 py-3 text-white outline-none focus:ring-2 focus:ring-emerald-400"
-            />
-            <button
-              type="submit"
-              disabled={savingName}
-              className="rounded-xl bg-emerald-500 px-4 py-3 font-bold text-black disabled:opacity-40"
-            >
-              {savingName ? "…" : "Save"}
-            </button>
-          </div>
+          {editingName ? (
+            <form onSubmit={handleSaveName} className="mt-2 flex gap-2">
+              <input
+                autoFocus
+                value={nameDraft}
+                onChange={(e) => setNameDraft(e.target.value)}
+                placeholder="Your name"
+                className="flex-1 rounded-xl bg-zinc-800 px-4 py-3 text-white outline-none focus:ring-2 focus:ring-emerald-400"
+              />
+              <button
+                type="submit"
+                disabled={savingName}
+                className="rounded-xl bg-emerald-500 px-4 py-3 font-bold text-black disabled:opacity-40"
+              >
+                {savingName ? "…" : "Save"}
+              </button>
+              <button
+                type="button"
+                onClick={() => setEditingName(false)}
+                className="rounded-xl bg-zinc-800 px-4 py-3 font-medium text-zinc-300"
+              >
+                Cancel
+              </button>
+            </form>
+          ) : (
+            <div className="mt-1 flex items-center justify-between">
+              <p className={name ? "text-white" : "text-zinc-500"}>{name || "Not set"}</p>
+              <button
+                onClick={startEditingName}
+                className="text-sm font-semibold text-emerald-400 active:text-emerald-300"
+              >
+                Edit
+              </button>
+            </div>
+          )}
           {nameMessage && (
-            <p className={`text-sm ${nameMessage.kind === "ok" ? "text-emerald-400" : "text-red-400"}`}>
+            <p className={`mt-2 text-sm ${nameMessage.kind === "ok" ? "text-emerald-400" : "text-red-400"}`}>
               {nameMessage.text}
             </p>
           )}
-        </form>
+        </div>
 
         {/* Email */}
         <div className="rounded-2xl bg-zinc-900 px-4 py-4">
@@ -175,38 +230,71 @@ export default function AccountPanel() {
           <p className="mt-1 text-white">{user?.email}</p>
         </div>
 
-        {/* Password */}
-        <form onSubmit={handleSetPassword} className="flex flex-col gap-3 rounded-2xl bg-zinc-900 px-4 py-4">
-          <p className="text-xs font-semibold uppercase tracking-wide text-zinc-500">Reset password</p>
-          <input
-            type="password"
-            autoComplete="new-password"
-            value={password}
-            onChange={(e) => setPassword(e.target.value)}
-            placeholder="New password (min 8 characters)"
-            className="rounded-xl bg-zinc-800 px-4 py-3 text-white outline-none focus:ring-2 focus:ring-emerald-400"
-          />
-          <input
-            type="password"
-            autoComplete="new-password"
-            value={confirm}
-            onChange={(e) => setConfirm(e.target.value)}
-            placeholder="Repeat new password"
-            className="rounded-xl bg-zinc-800 px-4 py-3 text-white outline-none focus:ring-2 focus:ring-emerald-400"
-          />
-          <button
-            type="submit"
-            disabled={savingPassword || !password || !confirm}
-            className="rounded-xl bg-emerald-500 px-4 py-3 font-bold text-black disabled:opacity-40"
-          >
-            {savingPassword ? "Saving…" : "Update password"}
-          </button>
+        {/* Reset password */}
+        <div className="rounded-2xl bg-zinc-900 px-4 py-4">
+          {resettingPassword ? (
+            <form onSubmit={handleResetPassword} className="flex flex-col gap-3">
+              <p className="text-xs font-semibold uppercase tracking-wide text-zinc-500">
+                Reset password
+              </p>
+              <input
+                type="password"
+                autoComplete="current-password"
+                value={oldPassword}
+                onChange={(e) => setOldPassword(e.target.value)}
+                placeholder="Old password"
+                className="rounded-xl bg-zinc-800 px-4 py-3 text-white outline-none focus:ring-2 focus:ring-emerald-400"
+              />
+              <input
+                type="password"
+                autoComplete="new-password"
+                value={newPassword}
+                onChange={(e) => setNewPassword(e.target.value)}
+                placeholder="New password (min 8 characters)"
+                className="rounded-xl bg-zinc-800 px-4 py-3 text-white outline-none focus:ring-2 focus:ring-emerald-400"
+              />
+              <input
+                type="password"
+                autoComplete="new-password"
+                value={repeatPassword}
+                onChange={(e) => setRepeatPassword(e.target.value)}
+                placeholder="Repeat new password"
+                className="rounded-xl bg-zinc-800 px-4 py-3 text-white outline-none focus:ring-2 focus:ring-emerald-400"
+              />
+              <div className="flex gap-2">
+                <button
+                  type="submit"
+                  disabled={savingPassword || !oldPassword || !newPassword || !repeatPassword}
+                  className="flex-1 rounded-xl bg-emerald-500 px-4 py-3 font-bold text-black disabled:opacity-40"
+                >
+                  {savingPassword ? "Saving…" : "Update password"}
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setResettingPassword(false)}
+                  className="rounded-xl bg-zinc-800 px-4 py-3 font-medium text-zinc-300"
+                >
+                  Cancel
+                </button>
+              </div>
+            </form>
+          ) : (
+            <button
+              onClick={startResettingPassword}
+              className="flex w-full items-center justify-between text-left"
+            >
+              <span className="font-semibold text-white">Reset password</span>
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" className="h-4 w-4 text-zinc-600">
+                <path d="M9 5l7 7-7 7" />
+              </svg>
+            </button>
+          )}
           {passwordMessage && (
-            <p className={`text-sm ${passwordMessage.kind === "ok" ? "text-emerald-400" : "text-red-400"}`}>
+            <p className={`mt-2 text-sm ${passwordMessage.kind === "ok" ? "text-emerald-400" : "text-red-400"}`}>
               {passwordMessage.text}
             </p>
           )}
-        </form>
+        </div>
 
         <button
           onClick={() => supabase.auth.signOut()}
