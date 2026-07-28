@@ -3,6 +3,7 @@
 import { useMemo, useState } from "react";
 import { useWorkoutData } from "@/hooks/useWorkoutData";
 import { cleanNumberText } from "@/lib/numberText";
+import { WORKOUT_TYPES } from "@/lib/workoutTypes";
 import SwipeRow from "@/components/ui/SwipeRow";
 
 type Screen =
@@ -50,9 +51,21 @@ function Header({ title, subtitle, onBack }: { title: string; subtitle?: string;
 }
 
 export default function ExerciseLog() {
-  const { exercises, sets, loading, addExercise, addSet, updateSet, deleteSet, deleteExerciseDay } =
-    useWorkoutData();
+  const {
+    exercises,
+    sets,
+    dayTypes,
+    loading,
+    addExercise,
+    addSet,
+    updateSet,
+    deleteSet,
+    deleteExerciseDay,
+    setDayType,
+  } = useWorkoutData();
   const [screen, setScreen] = useState<Screen>({ name: "days" });
+  const [askingType, setAskingType] = useState(false);
+  const [chosenType, setChosenType] = useState<string>(WORKOUT_TYPES[0]);
   const [newExerciseName, setNewExerciseName] = useState("");
   const [reps, setReps] = useState("10");
   const [weight, setWeight] = useState("20");
@@ -320,9 +333,55 @@ export default function ExerciseLog() {
     <div className="flex flex-1 flex-col">
       <Header title="Exercise Log" />
 
+      {askingType && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 px-8">
+          <div className="flex w-full max-w-sm flex-col gap-4 rounded-3xl bg-zinc-900 p-6">
+            <p className="text-center text-lg font-semibold text-white">
+              What are you training today?
+            </p>
+            <select
+              value={chosenType}
+              onChange={(e) => setChosenType(e.target.value)}
+              className="rounded-xl bg-zinc-800 px-3 py-3 text-white outline-none focus:ring-2 focus:ring-emerald-400"
+            >
+              {WORKOUT_TYPES.map((type) => (
+                <option key={type} value={type}>
+                  {type}
+                </option>
+              ))}
+            </select>
+            <div className="flex gap-2">
+              <button
+                onClick={() => {
+                  setDayType(todayIso(), chosenType);
+                  setAskingType(false);
+                  setScreen({ name: "day", date: todayIso() });
+                }}
+                className="flex-1 rounded-2xl bg-emerald-500 px-4 py-3 font-bold text-black active:scale-95"
+              >
+                Start
+              </button>
+              <button
+                onClick={() => setAskingType(false)}
+                className="flex-1 rounded-2xl bg-zinc-800 px-4 py-3 font-semibold text-zinc-300 active:scale-95"
+              >
+                Cancel
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
       <div className="px-4 pb-4">
         <button
-          onClick={() => setScreen({ name: "day", date: todayIso() })}
+          onClick={() => {
+            const existing = dayTypes[todayIso()];
+            if (existing) {
+              setScreen({ name: "day", date: todayIso() });
+            } else {
+              setAskingType(true);
+            }
+          }}
           className="w-full rounded-2xl bg-emerald-500 py-4 text-lg font-bold text-black shadow-lg active:scale-[0.98]"
         >
           + Log today&apos;s workout
@@ -342,7 +401,12 @@ export default function ExerciseLog() {
             className="flex items-center justify-between rounded-2xl bg-zinc-900 px-4 py-4 text-left active:bg-zinc-800"
           >
             <div>
-              <p className="font-semibold text-white">{formatDay(day.date)}</p>
+              <p className="font-semibold text-white">
+                {formatDay(day.date)}
+                {dayTypes[day.date] && (
+                  <span className="text-emerald-400"> — {dayTypes[day.date]}</span>
+                )}
+              </p>
               <p className="text-sm text-zinc-500">
                 {day.exerciseIds.length} exercise{day.exerciseIds.length === 1 ? "" : "s"} · {day.setCount} set{day.setCount === 1 ? "" : "s"}
               </p>

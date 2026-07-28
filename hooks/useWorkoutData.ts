@@ -19,6 +19,7 @@ export function useWorkoutData() {
 
   const [exercises, setExercises] = useState<Exercise[]>([]);
   const [sets, setSets] = useState<WorkoutSet[]>([]);
+  const [dayTypes, setDayTypes] = useState<Record<string, string>>({});
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
@@ -31,10 +32,16 @@ export function useWorkoutData() {
         .from("workout_sets")
         .select("id, exercise_id, performed_on, set_number, reps, weight")
         .order("performed_on", { ascending: false }),
-    ]).then(([exercisesRes, setsRes]) => {
+      supabase.from("workout_day_types").select("performed_on, workout_type"),
+    ]).then(([exercisesRes, setsRes, typesRes]) => {
       if (cancelled) return;
       setExercises((exercisesRes.data ?? []) as Exercise[]);
       setSets((setsRes.data ?? []) as WorkoutSet[]);
+      setDayTypes(
+        Object.fromEntries(
+          (typesRes.data ?? []).map((t) => [t.performed_on as string, t.workout_type as string]),
+        ),
+      );
       setLoading(false);
     });
 
@@ -93,6 +100,22 @@ export function useWorkoutData() {
     setSets((prev) => prev.filter((s) => s.id !== id));
   }, []);
 
+  const setDayType = useCallback(
+    async (performedOn: string, workoutType: string) => {
+      if (!userId) return;
+      const { error } = await supabase
+        .from("workout_day_types")
+        .upsert(
+          { user_id: userId, performed_on: performedOn, workout_type: workoutType },
+          { onConflict: "user_id,performed_on" },
+        );
+      if (!error) {
+        setDayTypes((prev) => ({ ...prev, [performedOn]: workoutType }));
+      }
+    },
+    [userId],
+  );
+
   const deleteExerciseDay = useCallback(async (performedOn: string, exerciseId: string) => {
     await supabase
       .from("workout_sets")
@@ -104,5 +127,16 @@ export function useWorkoutData() {
     );
   }, []);
 
-  return { exercises, sets, loading, addExercise, addSet, updateSet, deleteSet, deleteExerciseDay };
+  return {
+    exercises,
+    sets,
+    dayTypes,
+    loading,
+    addExercise,
+    addSet,
+    updateSet,
+    deleteSet,
+    deleteExerciseDay,
+    setDayType,
+  };
 }

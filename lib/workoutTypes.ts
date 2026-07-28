@@ -1,0 +1,15 @@
+export const WORKOUT_TYPES = [
+  "Push",
+  "Pull",
+  "Legs",
+  "Upper body",
+  "Lower body",
+  "Back",
+  "Arms",
+  "Chest",
+  "Shoulders",
+  "Core",
+  "Calisthenics",
+  "Cardio",
+  "Functional strength training",
+] as const;
