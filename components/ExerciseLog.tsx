@@ -65,6 +65,7 @@ export default function ExerciseLog() {
   } = useWorkoutData();
   const [screen, setScreen] = useState<Screen>({ name: "days" });
   const [askingType, setAskingType] = useState(false);
+  const [editingDayType, setEditingDayType] = useState(false);
   const [chosenType, setChosenType] = useState<string>(WORKOUT_TYPES[0]);
   const [newExerciseName, setNewExerciseName] = useState("");
   const [reps, setReps] = useState("10");
@@ -251,6 +252,8 @@ export default function ExerciseLog() {
     const usedIds = new Set(grouped.keys());
     const unusedExercises = exercises.filter((ex) => !usedIds.has(ex.id));
 
+    const dayType = dayTypes[screen.date];
+
     return (
       <div className="flex flex-1 flex-col">
         <Header
@@ -258,6 +261,65 @@ export default function ExerciseLog() {
           subtitle={`${grouped.size} exercise${grouped.size === 1 ? "" : "s"} · ${daySets.length} set${daySets.length === 1 ? "" : "s"}`}
           onBack={() => setScreen({ name: "days" })}
         />
+
+        {editingDayType && (
+          <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 px-8">
+            <div className="flex w-full max-w-sm flex-col gap-4 rounded-3xl bg-zinc-900 p-6">
+              <p className="text-center text-lg font-semibold text-white">
+                {screen.date === todayIso()
+                  ? "What are you training today?"
+                  : "What did you train on this day?"}
+              </p>
+              <select
+                value={chosenType}
+                onChange={(e) => setChosenType(e.target.value)}
+                className="rounded-xl bg-zinc-800 px-3 py-3 text-white outline-none focus:ring-2 focus:ring-emerald-400"
+              >
+                {WORKOUT_TYPES.map((type) => (
+                  <option key={type} value={type}>
+                    {type}
+                  </option>
+                ))}
+              </select>
+              <div className="flex gap-2">
+                <button
+                  onClick={() => {
+                    setDayType(screen.date, chosenType);
+                    setEditingDayType(false);
+                  }}
+                  className="flex-1 rounded-2xl bg-emerald-500 px-4 py-3 font-bold text-black active:scale-95"
+                >
+                  Save
+                </button>
+                <button
+                  onClick={() => setEditingDayType(false)}
+                  className="flex-1 rounded-2xl bg-zinc-800 px-4 py-3 font-semibold text-zinc-300 active:scale-95"
+                >
+                  Cancel
+                </button>
+              </div>
+            </div>
+          </div>
+        )}
+
+        <div className="-mt-1 px-4 pb-3">
+          <button
+            onClick={() => {
+              setChosenType(dayType ?? WORKOUT_TYPES[0]);
+              setEditingDayType(true);
+            }}
+            className={`inline-flex items-center gap-1.5 rounded-full px-3 py-1.5 text-sm font-semibold active:scale-95 ${
+              dayType
+                ? "bg-emerald-500/15 text-emerald-400"
+                : "bg-zinc-800 text-zinc-400"
+            }`}
+          >
+            {dayType ?? "Set workout type"}
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="h-3.5 w-3.5">
+              <path d="M17 3a2.8 2.8 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5Z" />
+            </svg>
+          </button>
+        </div>
 
         <div className="flex flex-col gap-2 px-4">
           {[...grouped.entries()].map(([exerciseId, count]) => (
