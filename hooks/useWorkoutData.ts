@@ -127,6 +127,19 @@ export function useWorkoutData() {
     );
   }, []);
 
+  const deleteDay = useCallback(async (performedOn: string) => {
+    await Promise.all([
+      supabase.from("workout_sets").delete().eq("performed_on", performedOn),
+      supabase.from("workout_day_types").delete().eq("performed_on", performedOn),
+    ]);
+    setSets((prev) => prev.filter((s) => s.performed_on !== performedOn));
+    setDayTypes((prev) => {
+      const next = { ...prev };
+      delete next[performedOn];
+      return next;
+    });
+  }, []);
+
   return {
     exercises,
     sets,
@@ -137,6 +150,7 @@ export function useWorkoutData() {
     updateSet,
     deleteSet,
     deleteExerciseDay,
+    deleteDay,
     setDayType,
   };
 }

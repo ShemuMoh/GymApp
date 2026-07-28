@@ -61,9 +61,11 @@ export default function ExerciseLog() {
     updateSet,
     deleteSet,
     deleteExerciseDay,
+    deleteDay,
     setDayType,
   } = useWorkoutData();
   const [screen, setScreen] = useState<Screen>({ name: "days" });
+  const [confirmDeleteDay, setConfirmDeleteDay] = useState<string | null>(null);
   const [askingType, setAskingType] = useState(false);
   const [editingDayType, setEditingDayType] = useState(false);
   const [chosenType, setChosenType] = useState<string>(WORKOUT_TYPES[0]);
@@ -391,9 +393,49 @@ export default function ExerciseLog() {
   }
 
   // ── Screen: all days ──
+  const dayToDelete = confirmDeleteDay ? days.find((d) => d.date === confirmDeleteDay) : null;
+
   return (
     <div className="flex flex-1 flex-col">
       <Header title="Exercise Log" />
+
+      {confirmDeleteDay && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 px-8">
+          <div className="flex w-full max-w-sm flex-col items-center gap-4 rounded-3xl bg-zinc-900 p-6 text-center">
+            <span className="text-4xl">⚠️</span>
+            <p className="text-white">
+              Delete the log for{" "}
+              <span className="font-bold">
+                {formatDay(confirmDeleteDay)}
+                {dayTypes[confirmDeleteDay] ? ` — ${dayTypes[confirmDeleteDay]}` : ""}
+              </span>
+              ?
+            </p>
+            <p className="text-sm text-zinc-400">
+              {dayToDelete
+                ? `This removes ${dayToDelete.exerciseIds.length} exercise${dayToDelete.exerciseIds.length === 1 ? "" : "s"} and ${dayToDelete.setCount} set${dayToDelete.setCount === 1 ? "" : "s"}. This can't be undone.`
+                : "This can't be undone."}
+            </p>
+            <div className="flex w-full gap-2">
+              <button
+                onClick={() => {
+                  deleteDay(confirmDeleteDay);
+                  setConfirmDeleteDay(null);
+                }}
+                className="flex-1 rounded-2xl bg-red-500 px-4 py-3 font-bold text-white active:scale-95"
+              >
+                Delete
+              </button>
+              <button
+                onClick={() => setConfirmDeleteDay(null)}
+                className="flex-1 rounded-2xl bg-zinc-800 px-4 py-3 font-semibold text-zinc-300 active:scale-95"
+              >
+                Cancel
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
 
       {askingType && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 px-8">
@@ -457,27 +499,31 @@ export default function ExerciseLog() {
           </p>
         )}
         {days.map((day) => (
-          <button
-            key={day.date}
-            onClick={() => setScreen({ name: "day", date: day.date })}
-            className="flex items-center justify-between rounded-2xl bg-zinc-900 px-4 py-4 text-left active:bg-zinc-800"
-          >
-            <div>
-              <p className="font-semibold text-white">
-                {formatDay(day.date)}
-                {dayTypes[day.date] && (
-                  <span className="text-emerald-400"> — {dayTypes[day.date]}</span>
-                )}
-              </p>
-              <p className="text-sm text-zinc-500">
-                {day.exerciseIds.length} exercise{day.exerciseIds.length === 1 ? "" : "s"} · {day.setCount} set{day.setCount === 1 ? "" : "s"}
-              </p>
-            </div>
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" className="h-4 w-4 text-zinc-600">
-              <path d="M9 5l7 7-7 7" />
-            </svg>
-          </button>
+          <SwipeRow key={day.date} onDelete={() => setConfirmDeleteDay(day.date)}>
+            <button
+              onClick={() => setScreen({ name: "day", date: day.date })}
+              className="flex w-full items-center justify-between bg-zinc-900 px-4 py-4 text-left active:bg-zinc-800"
+            >
+              <div>
+                <p className="font-semibold text-white">
+                  {formatDay(day.date)}
+                  {dayTypes[day.date] && (
+                    <span className="text-emerald-400"> — {dayTypes[day.date]}</span>
+                  )}
+                </p>
+                <p className="text-sm text-zinc-500">
+                  {day.exerciseIds.length} exercise{day.exerciseIds.length === 1 ? "" : "s"} · {day.setCount} set{day.setCount === 1 ? "" : "s"}
+                </p>
+              </div>
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" className="h-4 w-4 text-zinc-600">
+                <path d="M9 5l7 7-7 7" />
+              </svg>
+            </button>
+          </SwipeRow>
         ))}
+        {days.length > 0 && (
+          <p className="pt-1 text-center text-xs text-zinc-600">Swipe a day left to delete it</p>
+        )}
       </div>
     </div>
   );
