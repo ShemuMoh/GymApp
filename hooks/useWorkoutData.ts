@@ -20,6 +20,7 @@ export function useWorkoutData() {
   const [exercises, setExercises] = useState<Exercise[]>([]);
   const [sets, setSets] = useState<WorkoutSet[]>([]);
   const [dayTypes, setDayTypes] = useState<Record<string, string>>({});
+  const [dayOrders, setDayOrders] = useState<Record<string, string[]>>({});
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
@@ -33,7 +34,11 @@ export function useWorkoutData() {
         .select("id, exercise_id, performed_on, set_number, reps, weight")
         .order("performed_on", { ascending: false }),
       supabase.from("workout_day_types").select("performed_on, workout_type"),
-    ]).then(([exercisesRes, setsRes, typesRes]) => {
+      supabase
+        .from("workout_day_exercise_order")
+        .select("performed_on, exercise_id, position")
+        .order("position", { ascending: true }),
+    ]).then(([exercisesRes, setsRes, typesRes, ordersRes]) => {
       if (cancelled) return;
       setExercises((exercisesRes.data ?? []) as Exercise[]);
       setSets((setsRes.data ?? []) as WorkoutSet[]);
@@ -42,6 +47,12 @@ export function useWorkoutData() {
           (typesRes.data ?? []).map((t) => [t.performed_on as string, t.workout_type as string]),
         ),
       );
+      const orders: Record<string, string[]> = {};
+      for (const row of ordersRes.data ?? []) {
+        const date = row.performed_on as string;
+        (orders[date] ??= []).push(row.exercise_id as string);
+      }
+      setDayOrders(orders);
       setLoading(false);
     });
 
@@ -116,24 +127,59 @@ export function useWorkoutData() {
     [userId],
   );
 
+  const setDayOrder = useCallback(
+    async (performedOn: string, orderedExerciseIds: string[]) => {
+      if (!userId) return;
+      setDayOrders((prev) => ({ ...prev, [performedOn]: orderedExerciseIds }));
+      await supabase.from("workout_day_exercise_order").upsert(
+        orderedExerciseIds.map((exerciseId, i) => ({
+          user_id: userId,
+          performed_on: performedOn,
+          exercise_id: exerciseId,
+          position: i,
+        })),
+        { onConflict: "user_id,performed_on,exercise_id" },
+      );
+    },
+    [userId],
+  );
+
   const deleteExerciseDay = useCallback(async (performedOn: string, exerciseId: string) => {
-    await supabase
-      .from("workout_sets")
-      .delete()
-      .eq("performed_on", performedOn)
-      .eq("exercise_id", exerciseId);
+    await Promise.all([
+      supabase
+        .from("workout_sets")
+        .delete()
+        .eq("performed_on", performedOn)
+        .eq("exercise_id", exerciseId),
+      supabase
+        .from("workout_day_exercise_order")
+        .delete()
+        .eq("performed_on", performedOn)
+        .eq("exercise_id", exerciseId),
+    ]);
     setSets((prev) =>
       prev.filter((s) => !(s.performed_on === performedOn && s.exercise_id === exerciseId)),
     );
+    setDayOrders((prev) => {
+      const order = prev[performedOn];
+      if (!order) return prev;
+      return { ...prev, [performedOn]: order.filter((id) => id !== exerciseId) };
+    });
   }, []);
 
   const deleteDay = useCallback(async (performedOn: string) => {
     await Promise.all([
       supabase.from("workout_sets").delete().eq("performed_on", performedOn),
       supabase.from("workout_day_types").delete().eq("performed_on", performedOn),
+      supabase.from("workout_day_exercise_order").delete().eq("performed_on", performedOn),
     ]);
     setSets((prev) => prev.filter((s) => s.performed_on !== performedOn));
     setDayTypes((prev) => {
+      const next = { ...prev };
+      delete next[performedOn];
+      return next;
+    });
+    setDayOrders((prev) => {
       const next = { ...prev };
       delete next[performedOn];
       return next;
@@ -144,6 +190,7 @@ export function useWorkoutData() {
     exercises,
     sets,
     dayTypes,
+    dayOrders,
     loading,
     addExercise,
     addSet,
@@ -152,5 +199,6 @@ export function useWorkoutData() {
     deleteExerciseDay,
     deleteDay,
     setDayType,
+    setDayOrder,
   };
 }

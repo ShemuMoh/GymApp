@@ -55,6 +55,7 @@ export default function ExerciseLog() {
     exercises,
     sets,
     dayTypes,
+    dayOrders,
     loading,
     addExercise,
     addSet,
@@ -63,8 +64,10 @@ export default function ExerciseLog() {
     deleteExerciseDay,
     deleteDay,
     setDayType,
+    setDayOrder,
   } = useWorkoutData();
   const [screen, setScreen] = useState<Screen>({ name: "days" });
+  const [arranging, setArranging] = useState(false);
   const [confirmDeleteDay, setConfirmDeleteDay] = useState<string | null>(null);
   const [askingType, setAskingType] = useState(false);
   const [editingDayType, setEditingDayType] = useState(false);
@@ -141,22 +144,24 @@ export default function ExerciseLog() {
                 <input
                   type="number"
                   min={0}
-                  value={editReps}
-                  onChange={(e) => setEditReps(cleanNumberText(e.target.value))}
-                  aria-label="Reps"
-                  className="w-16 rounded-lg bg-zinc-800 px-2 py-2 text-center text-white outline-none"
-                />
-                <span className="text-xs text-zinc-500">reps</span>
-                <input
-                  type="number"
-                  min={0}
                   step="0.5"
                   value={editWeight}
                   onChange={(e) => setEditWeight(cleanNumberText(e.target.value))}
+                  onFocus={() => setEditWeight("")}
                   aria-label="Weight"
                   className="w-18 rounded-lg bg-zinc-800 px-2 py-2 text-center text-white outline-none"
                 />
                 <span className="text-xs text-zinc-500">kg</span>
+                <input
+                  type="number"
+                  min={0}
+                  value={editReps}
+                  onChange={(e) => setEditReps(cleanNumberText(e.target.value))}
+                  onFocus={() => setEditReps("")}
+                  aria-label="Reps"
+                  className="w-16 rounded-lg bg-zinc-800 px-2 py-2 text-center text-white outline-none"
+                />
+                <span className="text-xs text-zinc-500">reps</span>
                 <div className="ml-auto flex gap-1">
                   <button
                     type="submit"
@@ -187,7 +192,7 @@ export default function ExerciseLog() {
                     Set {i + 1}
                   </span>
                   <span className="font-mono text-lg text-white">
-                    {s.reps} reps · {s.weight} kg
+                    {s.weight} kg · {s.reps} reps
                   </span>
                 </button>
                 <button
@@ -213,16 +218,6 @@ export default function ExerciseLog() {
           className="mt-4 flex items-end justify-center gap-3 px-4"
         >
           <label className="flex flex-col gap-1 text-xs uppercase tracking-wide text-zinc-500">
-            Reps
-            <input
-              type="number"
-              min={0}
-              value={reps}
-              onChange={(e) => setReps(cleanNumberText(e.target.value))}
-              className="w-20 rounded-xl bg-zinc-800 px-3 py-3 text-center text-lg text-white outline-none focus:ring-2 focus:ring-emerald-400"
-            />
-          </label>
-          <label className="flex flex-col gap-1 text-xs uppercase tracking-wide text-zinc-500">
             Kg
             <input
               type="number"
@@ -230,7 +225,19 @@ export default function ExerciseLog() {
               step="0.5"
               value={weight}
               onChange={(e) => setWeight(cleanNumberText(e.target.value))}
+              onFocus={() => setWeight("")}
               className="w-24 rounded-xl bg-zinc-800 px-3 py-3 text-center text-lg text-white outline-none focus:ring-2 focus:ring-emerald-400"
+            />
+          </label>
+          <label className="flex flex-col gap-1 text-xs uppercase tracking-wide text-zinc-500">
+            Reps
+            <input
+              type="number"
+              min={0}
+              value={reps}
+              onChange={(e) => setReps(cleanNumberText(e.target.value))}
+              onFocus={() => setReps("")}
+              className="w-20 rounded-xl bg-zinc-800 px-3 py-3 text-center text-lg text-white outline-none focus:ring-2 focus:ring-emerald-400"
             />
           </label>
           <button
@@ -254,6 +261,21 @@ export default function ExerciseLog() {
     const usedIds = new Set(grouped.keys());
     const unusedExercises = exercises.filter((ex) => !usedIds.has(ex.id));
 
+    const savedOrder = dayOrders[screen.date] ?? [];
+    const orderedEntries = [...grouped.entries()].sort((a, b) => {
+      const ia = savedOrder.indexOf(a[0]);
+      const ib = savedOrder.indexOf(b[0]);
+      return (ia === -1 ? savedOrder.length : ia) - (ib === -1 ? savedOrder.length : ib);
+    });
+
+    const moveExercise = (index: number, direction: -1 | 1) => {
+      const ids = orderedEntries.map(([id]) => id);
+      const target = index + direction;
+      if (target < 0 || target >= ids.length) return;
+      [ids[index], ids[target]] = [ids[target], ids[index]];
+      setDayOrder(screen.date, ids);
+    };
+
     const dayType = dayTypes[screen.date];
 
     return (
@@ -261,7 +283,10 @@ export default function ExerciseLog() {
         <Header
           title={formatDay(screen.date)}
           subtitle={`${grouped.size} exercise${grouped.size === 1 ? "" : "s"} · ${daySets.length} set${daySets.length === 1 ? "" : "s"}`}
-          onBack={() => setScreen({ name: "days" })}
+          onBack={() => {
+            setArranging(false);
+            setScreen({ name: "days" });
+          }}
         />
 
         {editingDayType && (
@@ -304,7 +329,7 @@ export default function ExerciseLog() {
           </div>
         )}
 
-        <div className="-mt-1 px-4 pb-3">
+        <div className="-mt-1 flex items-center justify-between px-4 pb-3">
           <button
             onClick={() => {
               setChosenType(dayType ?? WORKOUT_TYPES[0]);
@@ -321,27 +346,77 @@ export default function ExerciseLog() {
               <path d="M17 3a2.8 2.8 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5Z" />
             </svg>
           </button>
+          {grouped.size > 1 && (
+            <button
+              onClick={() => setArranging((a) => !a)}
+              className={`inline-flex items-center gap-1.5 rounded-full px-3 py-1.5 text-sm font-semibold active:scale-95 ${
+                arranging
+                  ? "bg-emerald-500 text-black"
+                  : "bg-zinc-800 text-zinc-400"
+              }`}
+            >
+              {arranging ? "Done" : "Arrange"}
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="h-3.5 w-3.5">
+                <path d="M7 3v18M7 3l-3 3M7 3l3 3M17 21V3M17 21l-3-3M17 21l3-3" />
+              </svg>
+            </button>
+          )}
         </div>
 
         <div className="flex flex-col gap-2 px-4">
-          {[...grouped.entries()].map(([exerciseId, count]) => (
-            <SwipeRow key={exerciseId} onDelete={() => deleteExerciseDay(screen.date, exerciseId)}>
-              <button
-                onClick={() => setScreen({ name: "exercise", date: screen.date, exerciseId })}
-                className="flex w-full items-center justify-between bg-zinc-900 px-4 py-4 text-left active:bg-zinc-800"
+          {orderedEntries.map(([exerciseId, count], index) =>
+            arranging ? (
+              <div
+                key={exerciseId}
+                className="flex w-full items-center justify-between rounded-2xl bg-zinc-900 px-4 py-3"
               >
                 <span className="font-semibold text-white">{exerciseById.get(exerciseId)?.name}</span>
-                <span className="flex items-center gap-2 text-sm text-zinc-500">
-                  {count} set{count === 1 ? "" : "s"}
-                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" className="h-4 w-4">
-                    <path d="M9 5l7 7-7 7" />
-                  </svg>
+                <span className="flex items-center gap-2">
+                  <button
+                    onClick={() => moveExercise(index, -1)}
+                    disabled={index === 0}
+                    aria-label="Move up"
+                    className="flex h-9 w-9 items-center justify-center rounded-full bg-zinc-800 text-emerald-400 active:bg-zinc-700 disabled:opacity-30"
+                  >
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" className="h-4 w-4">
+                      <path d="M5 15l7-7 7 7" />
+                    </svg>
+                  </button>
+                  <button
+                    onClick={() => moveExercise(index, 1)}
+                    disabled={index === orderedEntries.length - 1}
+                    aria-label="Move down"
+                    className="flex h-9 w-9 items-center justify-center rounded-full bg-zinc-800 text-emerald-400 active:bg-zinc-700 disabled:opacity-30"
+                  >
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" className="h-4 w-4">
+                      <path d="M19 9l-7 7-7-7" />
+                    </svg>
+                  </button>
                 </span>
-              </button>
-            </SwipeRow>
-          ))}
+              </div>
+            ) : (
+              <SwipeRow key={exerciseId} onDelete={() => deleteExerciseDay(screen.date, exerciseId)}>
+                <button
+                  onClick={() => setScreen({ name: "exercise", date: screen.date, exerciseId })}
+                  className="flex w-full items-center justify-between bg-zinc-900 px-4 py-4 text-left active:bg-zinc-800"
+                >
+                  <span className="font-semibold text-white">{exerciseById.get(exerciseId)?.name}</span>
+                  <span className="flex items-center gap-2 text-sm text-zinc-500">
+                    {count} set{count === 1 ? "" : "s"}
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" className="h-4 w-4">
+                      <path d="M9 5l7 7-7 7" />
+                    </svg>
+                  </span>
+                </button>
+              </SwipeRow>
+            ),
+          )}
           {grouped.size > 0 && (
-            <p className="pt-1 text-center text-xs text-zinc-600">Swipe an exercise left to delete it</p>
+            <p className="pt-1 text-center text-xs text-zinc-600">
+              {arranging
+                ? "Use the arrows to reorder, then tap Done"
+                : "Swipe an exercise left to delete it"}
+            </p>
           )}
         </div>
 
