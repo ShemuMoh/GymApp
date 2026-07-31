@@ -69,6 +69,7 @@ export default function ExerciseLog() {
   const [screen, setScreen] = useState<Screen>({ name: "days" });
   const [arranging, setArranging] = useState(false);
   const [confirmDeleteDay, setConfirmDeleteDay] = useState<string | null>(null);
+  const [confirmDeleteExercise, setConfirmDeleteExercise] = useState<string | null>(null);
   const [askingType, setAskingType] = useState(false);
   const [editingDayType, setEditingDayType] = useState(false);
   const [chosenType, setChosenType] = useState<string>(WORKOUT_TYPES[0]);
@@ -289,6 +290,39 @@ export default function ExerciseLog() {
           }}
         />
 
+        {confirmDeleteExercise && (
+          <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 px-8">
+            <div className="flex w-full max-w-sm flex-col items-center gap-4 rounded-3xl bg-zinc-900 p-6 text-center">
+              <span className="text-4xl">⚠️</span>
+              <p className="text-white">
+                Delete{" "}
+                <span className="font-bold">{exerciseById.get(confirmDeleteExercise)?.name ?? "this exercise"}</span>{" "}
+                from {formatDay(screen.date)}?
+              </p>
+              <p className="text-sm text-zinc-400">
+                {`This removes ${grouped.get(confirmDeleteExercise) ?? 0} set${(grouped.get(confirmDeleteExercise) ?? 0) === 1 ? "" : "s"}. This can't be undone.`}
+              </p>
+              <div className="flex w-full gap-2">
+                <button
+                  onClick={() => {
+                    deleteExerciseDay(screen.date, confirmDeleteExercise);
+                    setConfirmDeleteExercise(null);
+                  }}
+                  className="flex-1 rounded-2xl bg-red-500 px-4 py-3 font-bold text-white active:scale-95"
+                >
+                  Delete
+                </button>
+                <button
+                  onClick={() => setConfirmDeleteExercise(null)}
+                  className="flex-1 rounded-2xl bg-zinc-800 px-4 py-3 font-semibold text-zinc-300 active:scale-95"
+                >
+                  Cancel
+                </button>
+              </div>
+            </div>
+          </div>
+        )}
+
         {editingDayType && (
           <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 px-8">
             <div className="flex w-full max-w-sm flex-col gap-4 rounded-3xl bg-zinc-900 p-6">
@@ -395,7 +429,7 @@ export default function ExerciseLog() {
                 </span>
               </div>
             ) : (
-              <SwipeRow key={exerciseId} onDelete={() => deleteExerciseDay(screen.date, exerciseId)}>
+              <SwipeRow key={exerciseId} onDelete={() => setConfirmDeleteExercise(exerciseId)}>
                 <button
                   onClick={() => setScreen({ name: "exercise", date: screen.date, exerciseId })}
                   className="flex w-full items-center justify-between bg-zinc-900 px-4 py-4 text-left active:bg-zinc-800"
